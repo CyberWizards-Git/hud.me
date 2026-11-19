@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Для тебя ❤️</title>
+  <style>
+    @import url('https://googleapis.com');
+    body { margin: 0; font-family: 'Montserrat', sans-serif; background: radial-gradient(circle, #2b102f 0%, #0d0710 100%); color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    .heart-bg { position: fixed; bottom: -50px; color: rgba(255, 75, 130, 0.4); pointer-events: none; animation: floatUp linear forwards; }
+    @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(-110vh) scale(1.3); opacity: 0; } }
+    #intro-screen { text-align: center; z-index: 10; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px 30px; border-radius: 28px; border: 1px solid rgba(255, 105, 180, 0.25); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); max-width: 340px; }
+    .pulse-heart { font-size: 55px; display: inline-block; animation: heartbeat 1.3s infinite; margin-bottom: 15px; }
+    @keyframes heartbeat { 0%, 100% { transform: scale(1); } 25%, 75% { transform: scale(1.15); } }
+    h1 { font-size: 22px; margin: 0 0 10px; }
+    #intro-screen p { font-size: 14px; color: #d1b3c4; margin: 0 0 25px; }
+    .open-btn { background: linear-gradient(45deg, #ff2a6d, #ff5e8e); color: #fff; border: none; padding: 15px 32px; font-size: 16px; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 25px rgba(255, 42, 109, 0.5); transition: 0.2s; }
+    .open-btn:hover { transform: scale(1.05); }
+    .player-card { display: none; background: rgba(25, 14, 30, 0.85); backdrop-filter: blur(16px); padding: 28px; border-radius: 28px; width: 360px; max-width: 90vw; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 105, 180, 0.2); z-index: 5; }
+    .vinyl { width: 85px; height: 85px; margin: 0 auto 12px; border-radius: 50%; background: radial-gradient(circle, #ff2a6d 18%, #111 20%, #222 45%, #111 47%, #1c1c1c 100%); border: 3px solid rgba(255, 255, 255, 0.15); display: flex; justify-content: center; align-items: center; animation: spin 6s linear infinite; animation-play-state: paused; }
+    .vinyl::after { content: '❤️'; font-size: 15px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    h2 { margin: 0; font-size: 22px; }
+    p.artist { margin: 4px 0 14px; color: #ff759f; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+    #play-btn { background: rgba(255, 42, 109, 0.2); color: #ff759f; border: 1px solid #ff2a6d; padding: 9px 24px; font-size: 14px; font-weight: 600; border-radius: 50px; cursor: pointer; transition: 0.3s; }
+    #play-btn:hover { background: #ff2a6d; color: #fff; }
+    
+    .lyrics-box { margin-top: 16px; height: 210px; overflow-y: auto; padding: 80px 12px; box-sizing: border-box; background: rgba(0, 0, 0, 0.35); border-radius: 18px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; position: relative; }
+    .lyrics-box::-webkit-scrollbar { display: none; }
+    
+    .lyric-line { margin: 0; font-size: 14px; line-height: 1.4; color: rgba(255, 255, 255, 0.35); transition: color 0.3s, text-shadow 0.3s, transform 0.3s; cursor: pointer; }
+    .lyric-line:hover { color: rgba(255, 255, 255, 0.7); }
+    .lyric-line.active { color: #fff; font-weight: 700; text-shadow: 0 0 12px rgba(255, 42, 109, 0.9); transform: scale(1.04); }
+    
+    .love-note { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 13px; color: #f3c6d8; font-style: italic; }
+  </style>
+</head>
+<body>
+
+  <audio id="audio-track" src="hug_me.mp3" preload="auto"></audio>
+
+  <div id="intro-screen">
+    <div class="pulse-heart">💖</div>
+    <h1>У меня для тебя кое-что есть...</h1>
+    <p>Включи звук погромче и нажми на кнопку ниже ✨</p>
+    <button type="button" class="open-btn" onclick="openGift()">Открыть подарок 🎁</button>
+  </div>
+
+  <div class="player-card" id="player-card">
+    <div class="vinyl" id="vinyl-disc"></div>
+    <h2>🩷</h2>
+    <p class="artist">🩷🩷🩷</p>
+    <button type="button" id="play-btn" onclick="togglePlay()">⏸ Пауза</button>
+    <div class="lyrics-box" id="lyrics-container"></div>
+    <div class="love-note">«Каждый раз, когда слушаю этот трек, думаю о тебе ❤️»</div>
+  </div>
+
+  <script>
+    const audio = document.getElementById('audio-track');
+    const playBtn = document.getElementById('play-btn');
+    const vinyl = document.getElementById('vinyl-disc');
+    const lyricsContainer = document.getElementById('lyrics-container');
+
+    const lyricsData = [
+      { time: 0.000, text: "✨ Слушай внимательно... ✨" },
+      { time: 6.299, text: "Бейби, если бы не ты, я не знал, что такое любить" },
+      { time: 9.499, text: "Делал всё, чтобы твоё внимание на себя обратить" },
+      { time: 12.699, text: "Время так летит, мы можем с тобой просто говорить" },
+      { time: 15.899, text: "Цветы, букеты в квартиру — создаю цветочный мир" },
+      { time: 19.099, text: "Обними меня сильнее, я растекаюсь как пломбир" },
+      { time: 22.299, text: "VVS для моей малышки, неси нам ювелира" },
+      { time: 25.499, text: "Давай быстрее, неси нам ювелира" },
+      { time: 28.699, text: "Раньше был никем, теперь я босс, командир" },
+      { time: 31.899, text: "Переслушиваю в телеграме голосовые" },
+      { time: 35.099, text: "На моём сердце до тебя раны были пулевые" },
+      { time: 38.299, text: "На этой тусовке мы самые-самые крутые" },
+      { time: 41.499, text: "Давай выпьем больше алкоголя, чтобы быть смелее" },
+      { time: 44.699, text: "Твои подруги завидуют — мы пиздатая пара" },
+      { time: 47.899, text: "Ты не знала, как любить, я показал тебе, как надо" },
+      { time: 51.099, text: "Ты не знала, где любовь, я показал, где она" },
+      { time: 54.299, text: "Я слишком грубый, малыш, боюсь оставить тебе рану" },
+      { time: 57.499, text: "Я её целую, моя бейби в Louis" },
+      { time: 60.699, text: "Куча сук вокруг, но меня не волнует" },
+      { time: 63.899, text: "Твоя любовь теперь мой мир рисует" },
+      { time: 67.099, text: "До тебя не верил в любовь — всё поменялось" },
+      { time: 70.299, text: "Переслушиваю в телеграме голосовые" },
+      { time: 73.499, text: "На моём сердце до тебя раны были пулевые" },
+      { time: 76.699, text: "На этой тусовке мы самые-самые крутые" },
+      { time: 79.899, text: "Давай выпьем больше алкоголя, чтобы быть смелее" },
+    ];
+
+    lyricsData.forEach((line, index) => {
+      const p = document.createElement('p');
+      p.className = 'lyric-line';
+      p.id = 'line-' + index;
+      p.textContent = line.text;
+      p.onclick = () => {
+        audio.currentTime = line.time;
+        if (audio.paused) togglePlay();
+      };
+      lyricsContainer.appendChild(p);
+    });
+
+    let activeIndex = -1;
+
+    function openGift() {
+      document.getElementById('intro-screen').style.display = 'none';
+      document.getElementById('player-card').style.display = 'block';
+      audio.play();
+      vinyl.style.animationPlayState = 'running';
+      setInterval(() => {
+        const heart = document.createElement('div');
+        heart.className = 'heart-bg';
+        heart.textContent = ['❤️', '💖', '💕', '✨'][Math.floor(Math.random() * 4)];
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+        heart.style.fontSize = (Math.random() * 15 + 12) + 'px';
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 7000);
+      }, 600);
+    }
+
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play();
+        playBtn.textContent = '⏸ Пауза';
+        vinyl.style.animationPlayState = 'running';
+      } else {
+        audio.pause();
+        playBtn.textContent = '▶ Продолжить';
+        vinyl.style.animationPlayState = 'paused';
+      }
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      const t = audio.currentTime;
+
+      let currentIndex = -1;
+      for (let i = 0; i < lyricsData.length; i++) {
+        const next = lyricsData[i + 1];
+        if (t >= lyricsData[i].time && (!next || t < next.time)) {
+          currentIndex = i;
+          break;
+        }
+      }
+
+      if (currentIndex !== -1 && currentIndex !== activeIndex) {
+        activeIndex = currentIndex;
+        document.querySelectorAll('.lyric-line').forEach((el, idx) => {
+          el.classList.toggle('active', idx === currentIndex);
+        });
+        const activeEl = document.getElementById('line-' + currentIndex);
+        const scrollPos = activeEl.offsetTop - (lyricsContainer.clientHeight / 2) + (activeEl.clientHeight / 2);
+        lyricsContainer.scrollTo({ top: scrollPos, behavior: 'smooth' });
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      playBtn.textContent = '▶ Включить ещё раз ❤️';
+      vinyl.style.animationPlayState = 'paused';
+    });
+  </script>
+</body>
+</html>
